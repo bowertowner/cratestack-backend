@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CrateStack</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+    }
+    h1 {
+      margin-bottom: 1rem;
+    }
+    .playlist {
+      margin-bottom: 2rem;
+    }
+    .playlist-title {
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .tracks {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>CrateStack Playlists</h1>
+  <div id="playlist-container">
+    <p>Loading playlists...</p>
+  </div>
+
+  <script>
+    async function loadPlaylists() {
+      const playlistContainer = document.getElementById('playlist-container');
+      playlistContainer.innerHTML = 'Loading playlists...';
+
+      try {
+        const res = await fetch('/playlists');
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+        const playlists = await res.json();
+        playlistContainer.innerHTML = '';
+
+        playlists.forEach(pl => {
+          const div = document.createElement('div');
+          div.className = 'playlist';
+
+          const title = document.createElement('div');
+          title.className = 'playlist-title';
+          title.textContent = pl.name;
+          title.addEventListener('click', () => toggleTracks(pl.id, tracksDiv));
+
+          const tracksDiv = document.createElement('div');
+          tracksDiv.className = 'tracks';
+          tracksDiv.id = `tracks-${pl.id}`;
+
+          div.appendChild(title);
+          div.appendChild(tracksDiv);
+          playlistContainer.appendChild(div);
+        });
+      } catch (err) {
+        console.error('Error loading playlists:', err);
+        playlistContainer.innerHTML = 'Failed to load playlists. Check console for details.';
+      }
+    }
+
+    async function toggleTracks(playlistId, tracksDiv) {
+      if (tracksDiv.style.display === 'block') {
+        tracksDiv.style.display = 'none';
+        tracksDiv.innerHTML = '';
+        return;
+      }
+
+      tracksDiv.innerHTML = 'Loading tracks...';
+      tracksDiv.style.display = 'block';
+
+      try {
+        const response = await fetch(`/playlist/${playlistId}/tracks`);
+        const tracks = await response.json();
+        if (tracks.length === 0) {
+          tracksDiv.innerHTML = '<em>No tracks found.</em>';
+          return;
+        }
+
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        thead.innerHTML = '<tr><th>Song</th><th>Artist</th><th>Bandcamp</th><th>SoundCloud</th><th>Beatport</th></tr>';
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        tracks.forEach(track => {
+          const row = document.createElement('tr');
+
+          const songCell = document.createElement('td');
+          songCell.textContent = track.trackName;
+          row.appendChild(songCell);
+
+          const artistCell = document.createElement('td');
+          artistCell.textContent = track.artistNames;
+          row.appendChild(artistCell);
+
+          const bandcampCell = document.createElement('td');
+          if (track.bandcampUrls && track.bandcampUrls.length > 0) {
+            const link = document.createElement('a');
+            link.href = track.bandcampUrls[0];
+            link.target = '_blank';
+            link.textContent = 'Link';
+            bandcampCell.appendChild(link);
+          } else {
+            bandcampCell.textContent = 'N/A';
+          }
+          row.appendChild(bandcampCell);
+
+          // New: SoundCloud
+          const soundcloudCell = document.createElement('td');
+          if (track.soundcloudUrl) {
+            const link = document.createElement('a');
+            link.href = track.soundcloudUrl;
+            link.target = '_blank';
+            link.textContent = 'Link';
+            soundcloudCell.appendChild(link);
+          } else {
+            soundcloudCell.textContent = 'N/A';
+          }
+          row.appendChild(soundcloudCell);
+
+          // New: Beatport
+        const beatportCell = document.createElement('td');
+        if (track.beatportUrl) {
+          const link = document.createElement('a');
+          link.href = track.beatportUrl;
+          link.target = '_blank';
+          link.textContent = 'Link';
+          beatportCell.appendChild(link);
+          } else {
+            beatportCell.textContent = 'N/A';
+          }
+          row.appendChild(beatportCell);
+
+          tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+        tracksDiv.innerHTML = '';
+        tracksDiv.appendChild(table);
+      } catch (error) {
+        console.error('Error loading tracks:', error);
+        tracksDiv.innerHTML = '<em>Error loading tracks.</em>';
+      }
+    }
+
+    loadPlaylists();
+  </script>
+</body>
+</html>

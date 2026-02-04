@@ -10,6 +10,15 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "express": "^5.1.0"
+    "axios": "^1.9.0",
+    "bandcamp-scraper": "^1.5.0",
+    "beatport-scraper": "^3.0.22",
+    "cheerio": "^1.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "soundcloud-scraper": "^5.0.3",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
   }
 }
